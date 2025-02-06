@@ -15,8 +15,8 @@ export function Home() {
               Start Creating
               <span className="button-icon">→</span>
             </Link>
-            <Link to="/explore" className="secondary-button">
-              Browse Library
+            <Link to="/copyright" className="secondary-button">
+              Copyright Check
             </Link>
           </div>
         </div>

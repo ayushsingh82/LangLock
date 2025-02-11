@@ -4,12 +4,13 @@ import '../App.css'
 import { useWallet } from '../hooks/useWallet'
 import { useIPFS } from '../hooks/useIPFS'
 import { useAITranslation } from '../hooks/useAITranslation'
+import { Navbar } from './Navbar'
 
 export function Upload() {
-  const [contentType, setContentType] = useState('video')
+  const [activeTab, setActiveTab] = useState('video') // 'video' or 'text'
   const [file, setFile] = useState(null)
   const [text, setText] = useState('')
-  const [targetLanguages, setTargetLanguages] = useState([])
+  const [targetLanguage, setTargetLanguage] = useState('')
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('entertainment')
   const [isProcessing, setIsProcessing] = useState(false)
@@ -28,6 +29,13 @@ export function Upload() {
   // Add IPFS and AI hooks
   const { uploadToIPFS } = useIPFS()
   const { translateContent } = useAITranslation()
+
+  // Add new state for video URL
+  const [videoUrl, setVideoUrl] = useState('')
+  const [uploadType, setUploadType] = useState('file') // 'file' or 'url'
+
+  // Add new state for text description
+  const [textDescription, setTextDescription] = useState('')
 
   const languages = [
     { code: 'es', name: 'Spanish' },
@@ -68,11 +76,7 @@ export function Upload() {
   })
 
   const handleLanguageToggle = (langCode) => {
-    setTargetLanguages(prev => 
-      prev.includes(langCode)
-        ? prev.filter(code => code !== langCode)
-        : [...prev, langCode]
-    )
+    setTargetLanguage(langCode)
   }
 
   const translateText = async (text, targetLang) => {
@@ -133,11 +137,11 @@ export function Upload() {
       await new Promise(resolve => setTimeout(resolve, 500))
     }
 
-    const inputContent = contentType === 'text' ? text : 'Sample video transcript: Hello, how are you?'
+    const inputContent = activeTab === 'text' ? text : 'Sample video transcript: Hello, how are you?'
     
     // Translate the actual input text
     const mockTranslations = await Promise.all(
-      targetLanguages.map(async (langCode) => {
+      [targetLanguage].map(async (langCode) => {
         const language = languages.find(l => l.code === langCode)
         const translatedText = await translateText(inputContent, langCode)
         return {
@@ -157,8 +161,8 @@ export function Upload() {
       return
     }
     
-    if (targetLanguages.length === 0) {
-      alert('Please select at least one target language')
+    if (!targetLanguage) {
+      alert('Please select a target language')
       return
     }
     
@@ -168,11 +172,11 @@ export function Upload() {
     try {
       // 1. Upload original content to IPFS
       setIsUploading(true)
-      const hash = await uploadToIPFS(contentType === 'video' ? file : text)
+      const hash = await uploadToIPFS(activeTab === 'video' ? file : text)
       setContentHash(hash)
       
-      // 2. Process translations
-      const translatedContent = await translateContent(hash, targetLanguages)
+      // 2. Process translation
+      const translatedContent = await translateContent(hash, [targetLanguage])
       setTranslations(translatedContent)
 
       // 3. Mint NFT with content metadata
@@ -196,102 +200,195 @@ export function Upload() {
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] relative overflow-hidden">
+      <Navbar />
       {/* Decorative red glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#FF4B4B]/10 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-[#FF2D2D]/15 rounded-full blur-[100px]"></div>
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-white">Content Translation</h1>
-          
-          {/* Add wallet connection button */}
-          {!isConnected ? (
-            <button
-              onClick={connect}
-              className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white font-semibold hover:shadow-[0_0_30px_rgba(255,75,75,0.3)] transition-all duration-300"
-            >
-              Connect Wallet
-            </button>
-          ) : (
-            <div className="text-white/80">
-              Connected: {account.slice(0, 6)}...{account.slice(-4)}
-            </div>
-          )}
+        {/* Tab Navigation */}
+        <div className="flex gap-4 mb-8">
+          <button
+            onClick={() => setActiveTab('video')}
+            className={`flex-1 px-4 py-2 rounded-lg text-base font-medium transition-all duration-300 flex items-center justify-center gap-2
+              ${activeTab === 'video' 
+                ? 'bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white shadow-[0_0_30px_rgba(255,75,75,0.3)]' 
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          >
+            <span className="text-xl">��</span>
+            Video Upload
+          </button>
+          <button
+            onClick={() => setActiveTab('text')}
+            className={`flex-1 px-4 py-2 rounded-lg text-base font-medium transition-all duration-300 flex items-center justify-center gap-2
+              ${activeTab === 'text' 
+                ? 'bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white shadow-[0_0_30px_rgba(255,75,75,0.3)]' 
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          >
+            <span className="text-xl">📝</span>
+            Text Upload
+          </button>
         </div>
-        
+
         <div className="relative">
           <form onSubmit={handleSubmit} className="bg-black/40 backdrop-blur-xl rounded-2xl p-8 border border-[#FF4B4B]/20">
-            {/* Content Type Section */}
-            <div className="mb-8 pb-6 border-b border-[#FF4B4B]/10">
-              <h2 className="text-xl font-semibold text-white mb-4">1. Choose Content Type</h2>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  className={`flex-1 px-4 py-3 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center justify-center gap-2
-                    ${contentType === 'video' 
-                      ? 'bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white' 
-                      : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-[#FF4B4B]/20'}`}
-                  onClick={() => setContentType('video')}
-                >
-                  <span className="text-xl">🎥</span>
-                  Video
-                </button>
-                <button
-                  type="button"
-                  className={`flex-1 px-4 py-3 rounded-xl backdrop-blur-sm transition-all duration-300 flex items-center justify-center gap-2
-                    ${contentType === 'text' 
-                      ? 'bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white' 
-                      : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-[#FF4B4B]/20'}`}
-                  onClick={() => setContentType('text')}
-                >
-                  <span className="text-xl">📝</span>
-                  Text
-                </button>
-              </div>
-            </div>
-
             {/* Content Input Section */}
             <div className="mb-8 pb-6 border-b border-[#FF4B4B]/10">
-              <h2 className="text-xl font-semibold text-white mb-4">2. Add Your Content</h2>
-              {contentType === 'video' ? (
-                <div {...getRootProps()} className="border-2 border-dashed border-[#FF4B4B]/30 rounded-xl p-8 text-center hover:border-[#FF4B4B]/60 transition-all duration-300 bg-white/5">
-                  <input {...getInputProps()} />
-                  <div className="text-gray-300">
-                    <span className="text-2xl block mb-2">📤</span>
-                    {file ? file.name : isDragActive
-                      ? 'Drop the video here...'
-                      : 'Drag & drop video or click to browse'
-                    }
+              {activeTab === 'video' && (
+                <div className="space-y-6">
+                  {/* Video Upload Type Toggle */}
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setUploadType('file')}
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2
+                        ${uploadType === 'file' 
+                          ? 'bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white' 
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-[#FF4B4B]/20'}`}
+                    >
+                      <span>📁</span>
+                      Upload File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUploadType('url')}
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2
+                        ${uploadType === 'url' 
+                          ? 'bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white' 
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 border border-[#FF4B4B]/20'}`}
+                    >
+                      <span>🔗</span>
+                      Video URL
+                    </button>
+                  </div>
+
+                  {uploadType === 'file' ? (
+                    <div {...getRootProps()} 
+                      className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300
+                        ${isDragActive 
+                          ? 'border-[#FF4B4B] bg-[#FF4B4B]/5' 
+                          : 'border-[#FF4B4B]/30 hover:border-[#FF4B4B]/60 bg-white/5'}`}
+                    >
+                      <input {...getInputProps()} />
+                      <div className="space-y-4">
+                        <span className="text-5xl">📤</span>
+                        <p className="text-xl text-gray-300">
+                          {file 
+                            ? file.name 
+                            : isDragActive 
+                              ? 'Drop your video here...' 
+                              : 'Drag & drop your video or click to browse'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Supports MP4, MOV, AVI, MKV
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <input
+                          type="url"
+                          value={videoUrl}
+                          onChange={(e) => setVideoUrl(e.target.value)}
+                          placeholder="Enter video URL (YouTube, Vimeo, etc.)"
+                          className="w-full bg-white/5 border border-[#FF4B4B]/20 rounded-xl px-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
+                        />
+                        {videoUrl && (
+                          <button
+                            onClick={() => setVideoUrl('')}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Supported platforms: YouTube, Vimeo, Dailymotion
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'text' && (
+                <div className="space-y-6">
+                  {/* Single Text Content Box */}
+                  <textarea
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Enter your text content here..."
+                    className="w-full h-48 bg-white/5 border border-[#FF4B4B]/20 rounded-xl p-6 text-white placeholder-gray-500 focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50 text-lg"
+                  />
+                  
+                  {/* Additional Metadata */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Content title"
+                        className="w-full bg-white/5 border border-[#FF4B4B]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-400">
+                        Category
+                      </label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="w-full bg-white/5 border border-[#FF4B4B]/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat} value={cat} className="bg-[#0D0D0D]">
+                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              ) : (
-                <textarea
-                  placeholder="Enter your text content here..."
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  className="w-full h-40 bg-white/5 border border-[#FF4B4B]/20 rounded-xl p-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
-                  required={contentType === 'text'}
-                />
               )}
             </div>
 
             {/* Language Selection Section */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-white mb-4">3. Select Target Languages</h2>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {languages.map(lang => (
-                  <label key={lang.code} className="relative">
-                    <input
-                      type="checkbox"
-                      checked={targetLanguages.includes(lang.code)}
-                      onChange={() => handleLanguageToggle(lang.code)}
-                      className="peer hidden"
-                    />
-                    <div className="cursor-pointer px-4 py-3 rounded-lg bg-white/5 border border-[#FF4B4B]/20 text-gray-300 peer-checked:bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] peer-checked:text-white transition-all duration-300 text-center hover:bg-white/10">
+              <h2 className="text-xl font-semibold text-white mb-4">3. Select Target Language</h2>
+              <div className="relative">
+                <select
+                  value={targetLanguage}
+                  onChange={(e) => setTargetLanguage(e.target.value)}
+                  className="w-full bg-white/5 border border-[#FF4B4B]/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
+                >
+                  <option value="" disabled className="bg-[#0D0D0D]">
+                    Select a language
+                  </option>
+                  {languages.map(lang => (
+                    <option 
+                      key={lang.code} 
+                      value={lang.code}
+                      className="bg-[#0D0D0D] py-2 px-4"
+                    >
                       {lang.name}
-                    </div>
-                  </label>
-                ))}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Selected Language Preview */}
+                {targetLanguage && (
+                  <div className="mt-4">
+                    <span 
+                      className="inline-block px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF4B4B]/20 to-[#FF2D2D]/20 border border-[#FF4B4B]/30 text-white"
+                    >
+                      {languages.find(l => l.code === targetLanguage)?.name}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -308,7 +405,7 @@ export function Upload() {
             {/* Submit Button */}
             <button 
               type="submit" 
-              disabled={isProcessing || (!text && contentType === 'text') || (!file && contentType === 'video')}
+              disabled={isProcessing || (!text && activeTab === 'text') || (!file && activeTab === 'video') || !targetLanguage}
               className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_0_30px_rgba(255,75,75,0.3)] transition-all duration-300"
             >
               {isProcessing ? 'Translating...' : 'Translate Content'}
@@ -325,7 +422,7 @@ export function Upload() {
                   <div key={index} className="bg-white/5 rounded-xl overflow-hidden border border-[#FF4B4B]/20">
                     <div className="bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] px-4 py-3 flex justify-between items-center">
                       <h3 className="text-white font-medium">{translation.language}</h3>
-                      {contentType === 'video' && (
+                      {activeTab === 'video' && (
                         <button className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
                           <span>▶️</span>
                         </button>
@@ -341,24 +438,24 @@ export function Upload() {
               </div>
             </div>
           )}
-        </div>
 
-        {/* Add NFT minting success message */}
-        {nftMinted && (
-          <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-[#FF4B4B]/20 to-[#FF2D2D]/20 border border-[#FF4B4B]/30">
-            <p className="text-white">
-              🎉 Content successfully minted as NFT! View on{' '}
-              <a 
-                href={`https://sei.explorers.guru/token/${contentHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#FF4B4B] hover:text-[#FF2D2D]"
-              >
-                Explorer
-              </a>
-            </p>
-          </div>
-        )}
+          {/* NFT minting success message */}
+          {nftMinted && (
+            <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-[#FF4B4B]/20 to-[#FF2D2D]/20 border border-[#FF4B4B]/30">
+              <p className="text-white">
+                🎉 Content successfully minted as NFT! View on{' '}
+                <a 
+                  href={`https://sei.explorers.guru/token/${contentHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#FF4B4B] hover:text-[#FF2D2D]"
+                >
+                  Explorer
+                </a>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

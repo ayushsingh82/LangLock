@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useWallet } from '../hooks/useWallet'
+import { Navbar } from './Navbar'
 
 export function Copyright() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -25,6 +26,7 @@ export function Copyright() {
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] relative overflow-hidden">
+      <Navbar />
       {/* Decorative red glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#FF4B4B]/10 rounded-full blur-[120px]"></div>
       <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-[#FF2D2D]/15 rounded-full blur-[100px]"></div>
@@ -36,19 +38,7 @@ export function Copyright() {
             <p className="text-gray-400">Verify content ownership and track usage across languages</p>
           </div>
           
-          {/* Wallet connection button */}
-          {!isConnected ? (
-            <button
-              onClick={connect}
-              className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white font-semibold hover:shadow-[0_0_30px_rgba(255,75,75,0.3)] transition-all duration-300"
-            >
-              Connect Wallet
-            </button>
-          ) : (
-            <div className="text-white/80">
-              Connected: {account.slice(0, 6)}...{account.slice(-4)}
-            </div>
-          )}
+          
         </div>
 
         {/* Search Section */}

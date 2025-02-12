@@ -1,4 +1,4 @@
-const wagmiabi = [
+export const wagmiAbi = [
     {
         name: "registerContent",
         inputs: [
@@ -12,6 +12,5 @@ const wagmiabi = [
             },
         ]
     }
-]
+] as const
 
-export default wagmiabi;

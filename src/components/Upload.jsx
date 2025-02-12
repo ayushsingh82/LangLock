@@ -355,7 +355,7 @@ export function Upload() {
 
             {/* Language Selection Section */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-white mb-4">3. Select Target Language</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Select Target Language</h2>
               <div className="relative">
                 <select
                   value={targetLanguage}

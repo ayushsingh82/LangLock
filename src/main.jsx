@@ -13,12 +13,13 @@ import { bscTestnet } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { getDefaultConfig, RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
+import { seiTestnet } from './config'
 
 // Configure for BSC Testnet
 const config = getDefaultConfig({
   appName: 'Language AI',
   projectId: 'e7fa7d19fd057ecd9403a0e89bd62b8b', // Your project ID
-  chains: [bscTestnet],
+  chains: [seiTestnet],
   ssr: false
 })
 

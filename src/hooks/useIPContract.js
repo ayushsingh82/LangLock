@@ -1,25 +1,25 @@
 import { useAccount, useContractRead, useContractWrite } from 'wagmi'
 import { CONTRACT_ADDRESS } from '../config'
-import wagmiabi from '../abi'
+import { wagmiAbi } from '../abi'
 
 export function useIPContract() {
   const { address } = useAccount()
 
   const { writeAsync: registerContentWrite } = useContractWrite({
     address: CONTRACT_ADDRESS,
-    abi: wagmiabi,
+    abi: wagmiAbi,
     functionName: 'registerContent',
   })
 
   const { writeAsync: addTranslationWrite } = useContractWrite({
     address: CONTRACT_ADDRESS,
-    abi: wagmiabi,
+    abi: wagmiAbi,
     functionName: 'addTranslation',
   })
 
   const { writeAsync: licenseContentWrite } = useContractWrite({
     address: CONTRACT_ADDRESS,
-    abi: wagmiabi,
+    abi: wagmiAbi,
     functionName: 'licenseContent',
   })
 

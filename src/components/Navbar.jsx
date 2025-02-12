@@ -1,9 +1,8 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useWallet } from '../hooks/useWallet'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 
 export function Navbar() {
   const location = useLocation()
-  const { isConnected, connect, account } = useWallet()
 
   return (
     <nav className="relative z-10 border-b border-[#FF4B4B]/20 backdrop-blur-xl bg-black/40">
@@ -49,22 +48,78 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Wallet Connection */}
-          {!isConnected ? (
-            <button
-              onClick={connect}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white text-sm font-medium hover:shadow-[0_0_30px_rgba(255,75,75,0.3)] transition-all duration-300"
-            >
-              Connect Wallet
-            </button>
-          ) : (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-[#FF4B4B]/20">
-              <span className="w-2 h-2 rounded-full bg-[#FF4B4B]"></span>
-              <span className="text-white/80 text-sm">
-                {account.slice(0, 6)}...{account.slice(-4)}
-              </span>
-            </div>
-          )}
+          {/* RainbowKit Connect Button */}
+          <ConnectButton.Custom>
+            {({
+              account,
+              chain,
+              openAccountModal,
+              openChainModal,
+              openConnectModal,
+              mounted,
+            }) => {
+              const ready = mounted
+              const connected = ready && account && chain
+
+              return (
+                <div
+                  {...(!ready && {
+                    'aria-hidden': true,
+                    style: {
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      userSelect: 'none',
+                    },
+                  })}
+                >
+                  {(() => {
+                    if (!connected) {
+                      return (
+                        <button
+                          onClick={openConnectModal}
+                          className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white text-sm font-medium hover:shadow-[0_0_30px_rgba(255,75,75,0.3)] transition-all duration-300"
+                        >
+                          Connect Wallet
+                        </button>
+                      )
+                    }
+
+                    return (
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={openChainModal}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-[#FF4B4B]/20 text-white text-sm"
+                        >
+                          {chain.hasIcon && (
+                            <div style={{ background: chain.iconBackground }} className="w-4 h-4 rounded-full overflow-hidden">
+                              {chain.iconUrl && (
+                                <img
+                                  alt={chain.name ?? 'Chain icon'}
+                                  src={chain.iconUrl}
+                                  className="w-4 h-4"
+                                />
+                              )}
+                            </div>
+                          )}
+                          {chain.name}
+                        </button>
+
+                        <button
+                          onClick={openAccountModal}
+                          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-[#FF4B4B]/20"
+                        >
+                          <span className="w-2 h-2 rounded-full bg-[#FF4B4B]"></span>
+                          <span className="text-white/80 text-sm">
+                            {account.displayName}
+                          </span>
+                        </button>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )
+            }}
+          </ConnectButton.Custom>
         </div>
       </div>
     </nav>

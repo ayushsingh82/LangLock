@@ -5,6 +5,8 @@ import { useWallet } from '../hooks/useWallet'
 import { useIPFS } from '../hooks/useIPFS'
 import { useAITranslation } from '../hooks/useAITranslation'
 import { Navbar } from './Navbar'
+import { useIPContract } from '../hooks/useIPContract'
+import { parseEther } from 'viem'
 
 export function Upload() {
   const [activeTab, setActiveTab] = useState('video') // 'video' or 'text'
@@ -59,6 +61,8 @@ export function Upload() {
     'news',
     'other'
   ]
+
+  const { registerContent, addTranslation } = useIPContract()
 
   const onDrop = useCallback(acceptedFiles => {
     const uploadedFile = acceptedFiles[0]
@@ -161,27 +165,25 @@ export function Upload() {
       return
     }
     
-    if (!targetLanguage) {
-      alert('Please select a target language')
-      return
-    }
-    
-    setIsProcessing(true)
-    setTranslations(null)
-
     try {
       // 1. Upload original content to IPFS
       setIsUploading(true)
-      const hash = await uploadToIPFS(activeTab === 'video' ? file : text)
-      setContentHash(hash)
+      const contentHash = await uploadToIPFS(activeTab === 'video' ? file : text)
       
-      // 2. Process translation
-      const translatedContent = await translateContent(hash, [targetLanguage])
-      setTranslations(translatedContent)
-
-      // 3. Mint NFT with content metadata
-      await mintContentNFT(hash, translatedContent)
+      // 2. Register content on blockchain
+      const price = parseEther('0.1')
+      const tx = await registerContent(contentHash, 'en', price)
+      const contentId = tx.events[0].args.id
+      
+      // 3. Process translation
+      const translatedContent = await translateContent(contentHash, [targetLanguage])
+      
+      // 4. Upload translation to IPFS and register on blockchain
+      const translationHash = await uploadToIPFS(translatedContent)
+      await addTranslation(contentId, targetLanguage, translationHash)
+      
       setNftMinted(true)
+      setContentHash(contentHash)
 
     } catch (error) {
       console.error('Upload failed:', error)
@@ -191,11 +193,6 @@ export function Upload() {
       setIsUploading(false)
       setProgress(0)
     }
-  }
-
-  // Add NFT minting function
-  const mintContentNFT = async (contentHash, translations) => {
-    // Implementation will come in the next step
   }
 
   return (

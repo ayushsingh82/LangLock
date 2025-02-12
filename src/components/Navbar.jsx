@@ -15,16 +15,7 @@ export function Navbar() {
               Language AI
             </Link>
             <div className="hidden md:flex items-center space-x-2">
-              <Link
-                to="/"
-                className={`px-5 py-3 rounded-lg text-base font-medium transition-all duration-300 ${
-                  location.pathname === '/' 
-                    ? 'bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white' 
-                    : 'text-gray-300 hover:bg-[#FF4B4B]/10 hover:text-white'
-                }`}
-              >
-                Home
-              </Link>
+              
               <Link
                 to="/upload"
                 className={`px-5 py-3 rounded-lg text-base font-medium transition-all duration-300 ${

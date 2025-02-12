@@ -1,23 +1,23 @@
-import { useAccount, useContractRead, useContractWrite } from 'wagmi'
+import { useAccount, useWriteContract } from 'wagmi'
 import { CONTRACT_ADDRESS } from '../config'
 import { wagmiAbi } from '../abi'
 
 export function useIPContract() {
   const { address } = useAccount()
 
-  const { writeAsync: registerContentWrite } = useContractWrite({
+  const { write: registerContentWrite } = useWriteContract({
     address: CONTRACT_ADDRESS,
     abi: wagmiAbi,
     functionName: 'registerContent',
   })
 
-  const { writeAsync: addTranslationWrite } = useContractWrite({
+  const { write: addTranslationWrite } = useWriteContract({
     address: CONTRACT_ADDRESS,
     abi: wagmiAbi,
     functionName: 'addTranslation',
   })
 
-  const { writeAsync: licenseContentWrite } = useContractWrite({
+  const { write: licenseContentWrite } = useWriteContract({
     address: CONTRACT_ADDRESS,
     abi: wagmiAbi,
     functionName: 'licenseContent',
@@ -28,8 +28,11 @@ export function useIPContract() {
       const tx = await registerContentWrite({
         args: [metadataURI, language, price],
       })
-      await tx.wait()
-      return tx
+      if (tx) {
+        await tx.wait()
+        return tx
+      }
+      throw new Error('Transaction failed')
     } catch (error) {
       console.error('Error registering content:', error)
       throw error
@@ -41,8 +44,11 @@ export function useIPContract() {
       const tx = await addTranslationWrite({
         args: [contentId, language, translationURI],
       })
-      await tx.wait()
-      return tx
+      if (tx) {
+        await tx.wait()
+        return tx
+      }
+      throw new Error('Transaction failed')
     } catch (error) {
       console.error('Error adding translation:', error)
       throw error
@@ -55,8 +61,11 @@ export function useIPContract() {
         args: [contentId],
         value: price,
       })
-      await tx.wait()
-      return tx
+      if (tx) {
+        await tx.wait()
+        return tx
+      }
+      throw new Error('Transaction failed')
     } catch (error) {
       console.error('Error licensing content:', error)
       throw error
@@ -69,4 +78,4 @@ export function useIPContract() {
     licenseContent,
     address
   }
-} 
+}

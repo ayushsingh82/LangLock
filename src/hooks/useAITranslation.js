@@ -1,58 +1,61 @@
 import { useState } from 'react'
+import axios from 'axios'
 
-export function useAITranslation() {
+export function useVideoTranslation() {
   const [isTranslating, setIsTranslating] = useState(false)
   const [error, setError] = useState(null)
+  const [translationStatus, setTranslationStatus] = useState(null)
+  const [videoData, setVideoData] = useState(null)
 
-  const translateContent = async (contentHash, targetLanguages) => {
+  const translateVideo = async (videoUrl, outputLanguage) => {
     setIsTranslating(true)
     setError(null)
 
     try {
-      // In production, this would call your AI translation service
-      // For now, we'll mock the translation process
-      const translations = await Promise.all(
-        targetLanguages.map(async (langCode) => {
-          // Simulate API call delay
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
-          return {
-            language: getLangName(langCode),
-            translatedText: `Translated content for ${langCode}`,
-            translatedHash: `${contentHash}-${langCode}`, // In production, this would be a new IPFS hash
-            timestamp: new Date().toISOString()
-          }
-        })
-      )
+      const response = await axios.post('https://api.hygen.com/v2/video_translate', {
+        video_url: videoUrl,
+        output_language: outputLanguage
+      }, {
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_HYGEN_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      })
 
-      return translations
+      const { video_translate_id } = response.data
+      setTranslationStatus({ id: video_translate_id, status: 'pending' })
+      return video_translate_id
     } catch (err) {
-      setError(err.message)
-      throw new Error('Translation failed')
+      setError(err.response?.data?.message || err.message)
+      throw err
     } finally {
       setIsTranslating(false)
     }
   }
 
-  const getLangName = (code) => {
-    const languages = {
-      'es': 'Spanish',
-      'fr': 'French',
-      'de': 'German',
-      'it': 'Italian',
-      'pt': 'Portuguese',
-      'ru': 'Russian',
-      'zh': 'Chinese',
-      'ja': 'Japanese',
-      'ko': 'Korean',
-      'hi': 'Hindi'
+  const checkStatus = async (videoId) => {
+    try {
+      const response = await axios.get(`https://api.hygen.com/v2/video_translate/${videoId}/status`, {
+        headers: {
+          'Authorization': `Bearer ${import.meta.env.VITE_HYGEN_API_KEY}`
+        }
+      })
+
+      const { status, url, title } = response.data
+      setVideoData({ status, url, title, id: videoId })
+      return { status, url, title }
+    } catch (err) {
+      setError(err.response?.data?.message || err.message)
+      throw err
     }
-    return languages[code] || code
   }
 
   return {
-    translateContent,
+    translateVideo,
+    checkStatus,
     isTranslating,
+    translationStatus,
+    videoData,
     error
   }
-} 
+}

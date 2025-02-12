@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback,useEffect  } from 'react'
 import { useDropzone } from 'react-dropzone'
 import '../App.css'
 import { useWallet } from '../hooks/useWallet'
 import { useIPFS } from '../hooks/useIPFS'
-import { useAITranslation } from '../hooks/useAITranslation'
 import { Navbar } from './Navbar'
 import { useIPContract } from '../hooks/useIPContract'
 import { parseEther } from 'viem'
+import { useVideoTranslation } from '../hooks/useAITranslation'
 
 export function Upload() {
-  const [activeTab, setActiveTab] = useState('video') // 'video' or 'text'
+  const [activeTab, setActiveTab] = useState('video') 
   const [file, setFile] = useState(null)
   const [text, setText] = useState('')
   const [targetLanguage, setTargetLanguage] = useState('')
@@ -18,6 +18,8 @@ export function Upload() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [translations, setTranslations] = useState(null)
+  const [videoId, setVideoId] = useState(null)
+  const [translatedVideoUrl, setTranslatedVideoUrl] = useState('')
   
   // Add new state for blockchain interaction
   const [isUploading, setIsUploading] = useState(false)
@@ -30,13 +32,10 @@ export function Upload() {
 
   // Add IPFS and AI hooks
   const { uploadToIPFS } = useIPFS()
-  const { translateContent } = useAITranslation()
+  const { translateVideo, checkStatus, isTranslating, videoData, error } = useVideoTranslation()
 
-  // Add new state for video URL
   const [videoUrl, setVideoUrl] = useState('')
   const [uploadType, setUploadType] = useState('file') // 'file' or 'url'
-
-  // Add new state for text description
   const [textDescription, setTextDescription] = useState('')
 
   const languages = [
@@ -158,40 +157,77 @@ export function Upload() {
     setTranslations(mockTranslations)
   }
 
+  useEffect(() => {
+    let intervalId
+
+    if (videoId) {
+      intervalId = setInterval(async () => {
+        try {
+          const { status, url } = await checkStatus(videoId)
+          if (status === 'success' && url) {
+            setTranslatedVideoUrl(url)
+            clearInterval(intervalId)
+          } else if (status === 'failed') {
+            clearInterval(intervalId)
+          }
+        } catch (err) {
+          console.error('Status check failed:', err)
+          clearInterval(intervalId)
+        }
+      }, 5000) 
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [checkStatus,videoId])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!isConnected) {
-      alert('Please connect your wallet first')
-      return
-    }
+    // if (!isConnected) {
+    //   alert('Please connect your wallet first')
+    //   return
+    // }
     
     try {
-      // 1. Upload original content to IPFS
       setIsUploading(true)
+      setIsProcessing(true)
       const contentHash = await uploadToIPFS(activeTab === 'video' ? file : text)
-      
-      // 2. Register content on blockchain
-      const price = parseEther('0.1')
-      const tx = await registerContent(contentHash, 'en', price)
-      const contentId = tx.events[0].args.id
-      
-      // 3. Process translation
-      const translatedContent = await translateContent(contentHash, [targetLanguage])
-      
-      // 4. Upload translation to IPFS and register on blockchain
-      const translationHash = await uploadToIPFS(translatedContent)
-      await addTranslation(contentId, targetLanguage, translationHash)
+      // const price = parseEther('0.1')
+      // const tx = await registerContent(contentHash, 'en', price)
+      // const contentId = tx.events[0].args.id
+      const selectedLang = languages.find(l => l.code === targetLanguage)?.name
+      let videoSource;
+        if (uploadType === 'url') {
+            videoSource = videoUrl;
+        } else {
+            if (file) {
+              const videoURL = "https://www.youtube.com/watch?v=AdBzzpq3xV4";
+              videoSource = videoURL; 
+              console.log("video URL",videoSource)
+          }
+        }
+        console.log(videoSource, selectedLang)
+        const vid = await translateVideo(
+            videoSource,
+            selectedLang
+        )
+      console.log("videoId",vid)
+      setVideoId(vid)
+      const translationHash = await uploadToIPFS(vid)
+      await addTranslation(vid, targetLanguage, translationHash)
       
       setNftMinted(true)
       setContentHash(contentHash)
 
     } catch (error) {
-      console.error('Upload failed:', error)
-      alert('Upload failed: ' + error.message)
+      console.error('targetLanguage failed:', error)
+      alert('Translation failed: ' + error.message)
     } finally {
       setIsProcessing(false)
       setIsUploading(false)
       setProgress(0)
+      setIsProcessing(false)
     }
   }
 
@@ -288,7 +324,7 @@ export function Upload() {
                           type="url"
                           value={videoUrl}
                           onChange={(e) => setVideoUrl(e.target.value)}
-                          placeholder="Enter video URL (YouTube, Vimeo, etc.)"
+                          placeholder="Enter video URL (YouTube, Video, etc.)"
                           className="w-full bg-white/5 border border-[#FF4B4B]/20 rounded-xl px-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
                         />
                         {videoUrl && (
@@ -307,6 +343,29 @@ export function Upload() {
                   )}
                 </div>
               )}
+
+        {translatedVideoUrl && (
+              <div className="mt-8 bg-black/40 backdrop-blur-xl rounded-2xl p-8 border border-[#FF4B4B]/20">
+                <h2 className="text-xl font-semibold text-white mb-6">Translated Video</h2>
+                <div className="aspect-video rounded-xl overflow-hidden">
+                  <video 
+                    src={translatedVideoUrl}
+                    controls
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="mt-4 text-gray-400 text-sm">
+                  Note: This video URL will expire in 7 days
+                </div>
+              </div>
+            )}
+            {videoId && !translatedVideoUrl && (
+              <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-[#FF4B4B]/20 to-[#FF2D2D]/20 border border-[#FF4B4B]/30">
+                <p className="text-white">
+                  Translation Status: {videoData?.status || 'Processing'}
+                </p>
+              </div>
+            )}
 
               {activeTab === 'text' && (
                 <div className="space-y-6">

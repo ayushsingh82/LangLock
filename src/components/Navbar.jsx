@@ -50,6 +50,19 @@ export function Navbar() {
                   <div className="absolute bottom-1 left-5 right-5 h-0.5 bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] rounded-full"></div>
                 )}
               </Link>
+              <Link
+                to="/exchange"
+                className={`relative px-5 py-3 rounded-lg text-base font-medium transition-all duration-300 hover:scale-[1.02] ${
+                  location.pathname === '/exchange' 
+                    ? 'text-white' 
+                    : 'text-gray-300 hover:text-white'
+                }`}
+              >
+                Buy/Sell
+                {location.pathname === '/exchange' && (
+                  <div className="absolute bottom-1 left-5 right-5 h-0.5 bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] rounded-full"></div>
+                )}
+              </Link>
             </div>
           </div>
 

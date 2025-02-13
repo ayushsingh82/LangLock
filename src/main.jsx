@@ -6,6 +6,7 @@ import App from './App.jsx'
 import { Home } from './components/Home.jsx'
 import { Upload } from './components/Upload.jsx'
 import { Copyright } from './components/Copyright.jsx'
+import { Exchange } from './components/Exchange.jsx'
 
 // Import Wagmi and RainbowKit
 import { WagmiProvider } from 'wagmi'
@@ -36,6 +37,7 @@ createRoot(document.getElementById('root')).render(
                 <Route index element={<Home />} />
                 <Route path="upload" element={<Upload />} />
                 <Route path="copyright" element={<Copyright />} />
+                <Route path="exchange" element={<Exchange />} />
                 {/* Add more routes here later */}
               </Route>
             </Routes>

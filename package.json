@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.15",
+    "@goat-sdk/plugin-0x": "^0.1.5",
+    "@goat-sdk/plugin-1inch": "^0.1.5",
+    "@goat-sdk/plugin-erc20": "^0.2.10",
     "@headlessui/react": "^2.2.0",
     "@rainbow-me/rainbowkit": "^2.2.3",
     "@tanstack/react-query": "^5.66.0",

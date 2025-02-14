@@ -172,7 +172,7 @@ export function Home() {
                   alt="Sei Logo" 
                   className="w-8 h-8 rounded-full filter drop-shadow-[0_0_8px_rgba(255,75,75,0.3)]"
                 />
-                <span className="text-white font-bold text-2xl">AI</span>
+                <span className="text-white font-bold text-2xl">LangLock</span>
               </div>
               <p className="text-gray-400 mb-6">
                 Secure and translate your content across languages with blockchain protection
@@ -263,7 +263,7 @@ export function Home() {
           {/* Copyright */}
           <div className="mt-12 pt-8 border-t border-[#FF4B4B]/10">
             <p className="text-center text-gray-500">
-              © 2024 AI. All rights reserved.
+              © 2024 LangLock. All rights reserved.
             </p>
           </div>
         </div>

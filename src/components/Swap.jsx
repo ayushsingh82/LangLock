@@ -96,26 +96,26 @@ export function Swap() {
         throw new Error('Price data not available')
       }
 
-      // Calculate conversion using raw amount (not in wei)
-      const fromAmountRaw = parseFloat(amount) / Math.pow(10, TOKENS[fromToken].decimals)
-      const exchangeRate = toPrice / fromPrice
-      const toAmountRaw = fromAmountRaw * exchangeRate
+      // Calculate conversion using simple multiplication
+      const fromAmountNumber = parseFloat(amount)
+      const exchangeRate = fromPrice / toPrice
+      const toAmountNumber = fromAmountNumber * exchangeRate
 
-      // Convert to token decimals for display
-      const toAmountInWei = toAmountRaw * Math.pow(10, TOKENS[toToken].decimals)
-      setToAmount(toAmountInWei.toString())
+      // Format the result with appropriate decimals
+      const formattedToAmount = toAmountNumber.toFixed(6)
+      setToAmount(formattedToAmount)
       
       // Generate swap URL
       const swapLink = `https://app.1inch.io/#/${chainId}/unified/swap/${fromTokenAddress}/${toTokenAddress}`
       setSwapUrl(swapLink)
 
       // Add slippage impact
-      const slippageImpact = (Math.random() * parseFloat(slippage)) / 100
-      const finalAmount = toAmountInWei * (1 - slippageImpact)
+      const slippageImpact = (parseFloat(slippage) / 100)
+      const finalAmount = toAmountNumber * (1 - slippageImpact)
       
       return {
-        toAmount: finalAmount.toFixed(TOKENS[toToken].decimals),
-        priceImpact: (slippageImpact * 100).toFixed(2)
+        toAmount: finalAmount.toFixed(6),
+        priceImpact: slippage
       }
 
     } catch (err) {
@@ -124,6 +124,14 @@ export function Swap() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Update price display
+  const getPriceRatio = (from, to) => {
+    const fromPrice = getTokenPrice(from)
+    const toPrice = getTokenPrice(to)
+    if (!fromPrice || !toPrice) return '0.00'
+    return (fromPrice / toPrice).toFixed(6)
   }
 
   const handleFromAmountChange = (value) => {
@@ -298,12 +306,12 @@ export function Swap() {
               <div className="text-red-500 text-sm text-center">{error}</div>
             )}
 
-            {/* Add price display */}
+            {/* Price display */}
             {fromAmount && !isLoading && (
               <div className="mt-4 text-sm text-gray-400 text-center">
-                1 {fromToken} = {(getTokenPrice(fromToken) / getTokenPrice(toToken)).toFixed(6)} {toToken}
+                1 {fromToken} = {getPriceRatio(fromToken, toToken)} {toToken}
                 <br />
-                1 {toToken} = {(getTokenPrice(toToken) / getTokenPrice(fromToken)).toFixed(6)} {fromToken}
+                1 {toToken} = {getPriceRatio(toToken, fromToken)} {fromToken}
               </div>
             )}
 

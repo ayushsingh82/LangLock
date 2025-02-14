@@ -6,13 +6,16 @@ export function Copyright() {
   const [searchQuery, setSearchQuery] = useState('')
   const [verificationResult, setVerificationResult] = useState(null)
   const { isConnected, connect, account } = useWallet()
+  const [showTransferModal, setShowTransferModal] = useState(false)
+  const [transferContentId, setTransferContentId] = useState('')
+  const [newOwnerAddress, setNewOwnerAddress] = useState('')
   
   const handleSearch = async (e) => {
     e.preventDefault()
     // Mock verification result
     setVerificationResult({
       title: "Sample Content",
-      owner: "0x1234...5678",
+      owner: "0x1453...715f4",
       timestamp: "2024-03-20",
       languages: ["English", "Spanish", "French"],
       status: "Verified",
@@ -22,6 +25,21 @@ export function Copyright() {
         { date: "2024-03-18", type: "View", region: "Mexico" }
       ]
     })
+  }
+
+  const handleTransferOwnership = async () => {
+    if (!transferContentId || !newOwnerAddress) {
+      alert('Please fill in all fields')
+      return
+    }
+
+    try {
+      // Mock transfer success
+      alert('Ownership transferred successfully!')
+      setShowTransferModal(false)
+    } catch (error) {
+      alert('Failed to transfer ownership: ' + error.message)
+    }
   }
 
   return (
@@ -61,6 +79,81 @@ export function Copyright() {
               </button>
             </div>
           </form>
+
+          {/* Transfer Ownership Button */}
+          <div className="mt-4">
+            <button
+              onClick={() => setShowTransferModal(true)}
+              className="w-full px-6 py-4 rounded-xl bg-white/5 border border-[#FF4B4B]/20 text-white font-semibold hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2"
+            >
+              <svg 
+                className="w-5 h-5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" 
+                />
+              </svg>
+              Transfer Ownership
+            </button>
+          </div>
+
+          {/* Transfer Modal */}
+          {showTransferModal && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+              <div className="bg-black/80 p-8 rounded-2xl border border-[#FF4B4B]/20 max-w-md w-full">
+                <h3 className="text-xl font-semibold text-white mb-6">Transfer Content Ownership</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">
+                      Content ID
+                    </label>
+                    <input
+                      type="text"
+                      value={transferContentId}
+                      onChange={(e) => setTransferContentId(e.target.value)}
+                      placeholder="Enter content ID"
+                      className="w-full bg-white/5 border border-[#FF4B4B]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">
+                      New Owner Address
+                    </label>
+                    <input
+                      type="text"
+                      value={newOwnerAddress}
+                      onChange={(e) => setNewOwnerAddress(e.target.value)}
+                      placeholder="Enter wallet address"
+                      className="w-full bg-white/5 border border-[#FF4B4B]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#FF4B4B]/50 focus:ring-1 focus:ring-[#FF4B4B]/50"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 mt-8">
+                  <button
+                    onClick={() => setShowTransferModal(false)}
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-[#FF4B4B]/20 text-white font-medium hover:bg-white/10 transition-all duration-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleTransferOwnership}
+                    className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-[#FF4B4B] to-[#FF2D2D] text-white font-medium hover:shadow-[0_0_30px_rgba(255,75,75,0.3)] transition-all duration-300"
+                  >
+                    Transfer
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Verification Result */}
           {verificationResult && (

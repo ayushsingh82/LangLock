@@ -19,7 +19,7 @@ export function Navbar() {
                 alt="Sei Logo" 
                 className="w-8 h-8 rounded-full filter drop-shadow-[0_0_8px_rgba(255,75,75,0.3)]"
               />
-              AI
+              LangLock
             </Link>
             <div className="hidden md:flex items-center space-x-2">
               <Link
